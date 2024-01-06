@@ -601,3 +601,80 @@ void Employee::close_Account(Customer& customer,ofstream& MyFile)
     }
 
 };
+
+void deposit_From_Outside(Bank& bank,Customer& customer,ofstream& MyFile,ofstream& Bank_File)
+{
+    if (customer.is_Closed == false)
+    {
+        long account_balance = customer.cash_Deposit;
+        long now_deposited;
+        cout << "Enter the amount to be deposited : ";
+        cin >> now_deposited;
+        customer.cash_Deposit = account_balance + now_deposited;
+        Transaction transaction_now_1;
+        transaction_now_1.set_Transaction_Date(customer.date_Today);
+        transaction_now_1.set_Description(customer.Customer_Name,"Money Credited to Customer Account",now_deposited);
+        customer.transactions.push_back(transaction_now_1);
+
+        if (customer.cash_Deposit >= 0)
+        {
+            bank.bank_Balance+=customer.OD_Now;
+            Bank_File<<customer.date_Today<<" - "<<customer.Customer_Name<<" : Overdraft Credited to Bank Account : "<<to_string(customer.OD_Now)<<" LKR."<<endl;
+            Bank_File<<customer.date_Today<<" - "<<"Bank balance : "<<bank.bank_Balance<<endl;
+            Transaction transaction_now_2;
+            transaction_now_2.set_Transaction_Date(customer.date_Today);
+            transaction_now_2.set_Description(customer.Customer_Name,"Overdraft Credited to Bank Account",customer.OD_Now);
+            bank.transactions.push_back(transaction_now_2);
+            customer.OD_Now = 0;
+        }
+        else
+        {
+            bank.bank_Balance+=now_deposited;
+            customer.OD_Now -= now_deposited;
+            Bank_File<<customer.date_Today<<" - "<<customer.Customer_Name<<" : Overdraft Credited to Bank Account : "<<to_string(now_deposited)<<" LKR."<<endl;
+            Bank_File<<customer.date_Today<<" - "<<"Bank Balance : "<<bank.bank_Balance<<endl;
+            Transaction transaction_now_2;
+            transaction_now_2.set_Transaction_Date(customer.date_Today);
+            transaction_now_2.set_Description(customer.Customer_Name,"Overdraft Credited to Bank Account",now_deposited);
+            bank.transactions.push_back(transaction_now_2);
+
+        }
+
+        for(int i=0; i< bank.customer_Arr.size(); i++)
+        {
+            if(customer.Customer_Name==bank.customer_Arr[i].Customer_Name)
+            {
+                bank.customer_Arr[i].cash_Deposit=customer.cash_Deposit;
+                bank.customer_Arr[i].OD_Now=customer.OD_Now;
+                break;
+            }
+        }
+        cout<<"Deposit Succesfull."<<endl;
+        MyFile<<customer.date_Today<<" - "<<customer.Customer_Name<<" : Deposited "<<now_deposited<<endl;
+    }
+    else
+    {
+        cout << "Account doesn't Exist!! Already Closed." << endl;
+    }
+}
+
+string get_PW()
+{
+	string password;
+	char ch;
+    cout << "Enter the Password : ";
+    
+    while (true)
+    {
+        ch = _getch(); 
+        if (ch == '\r') 
+        {
+            cout << endl;
+            break;
+        }
+        password += ch;
+        cout << '*'; 
+    }
+
+    return password;
+}
