@@ -1,3 +1,12 @@
+/******************************************
+Quest 09 - Programming Quest
+Group Members
+	- 21/ENG/016 - B.Anchuthan
+	- 21/ENG/087 - M.S.S.Rahuman
+	- 21/ENG/091 - N.Mathuwanthi
+*******************************************/
+
+// 21/ENG/087 - M.S.S.Rahuman
 #include <iostream>
 #include <conio.h>
 #include <unistd.h>
@@ -109,6 +118,7 @@ public:
 
 };
 
+//21/ENG/091 - N.Mathuwanthi
 int Administrator::employee_No(Bank& bank)
 {
     return bank.employee_Arr.size();
@@ -351,6 +361,8 @@ void Customer::withdraw_Cash_2(Bank& bank,ofstream& MyFile,ofstream& Bank_File)
     }
 
 };
+
+// 21/ENG/016 - B.Anchuthan
 void Employee::set_Date(Administrator & Admin)
 {
     this -> date_Today = Admin.get_Date();
@@ -602,6 +614,7 @@ void Employee::close_Account(Customer& customer,ofstream& MyFile)
 
 };
 
+// 21/ENG/087 - M.S.S.Rahuman
 void deposit_From_Outside(Bank& bank,Customer& customer,ofstream& MyFile,ofstream& Bank_File)
 {
     if (customer.is_Closed == false)
@@ -679,6 +692,8 @@ string get_PW()
     return password;
 }
 
+
+// 21/ENG/091 - N.Mathuwanthi
 int main()
 {
     Bank bank;
