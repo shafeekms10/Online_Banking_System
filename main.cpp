@@ -351,3 +351,253 @@ void Customer::withdraw_Cash_2(Bank& bank,ofstream& MyFile,ofstream& Bank_File)
     }
 
 };
+void Employee::set_Date(Administrator & Admin)
+{
+    this -> date_Today = Admin.get_Date();
+};
+
+void Employee::set_Employee_Name(string employee_Name)
+{
+    this->employee_Name = employee_Name;
+};
+
+void Employee::creating_Customer(Customer & customerCreated,Bank& bank,ofstream& MyFile)
+{
+    string initial_Letter="";
+    if(bank.customer_Arr.size()<9)
+    {
+        initial_Letter="00";
+    }
+    else if(bank.customer_Arr.size()<99)
+    {
+        initial_Letter="0";
+    }
+    string customer_contact;
+    int account_type;
+    customerCreated.created_Date = date_Today;
+    string customer_Name= "Customer" +initial_Letter+to_string((bank.customer_Arr.size()) + 1);
+    cout << "Customer Name : " << "Customer" +initial_Letter+to_string((bank.customer_Arr.size()) + 1)<<endl;
+    cout << "Enter Contact Number : ";
+    cin >> customer_contact;
+    customerCreated.Customer_Name=customer_Name;
+    customerCreated.customer_Contact_No = customer_contact;
+    cout << "1) Current account" << endl;
+    cout << "2) Saving account" << endl;
+    cout << "Select Account Type : ";
+    cin >> account_type;
+    cout << endl;
+
+    while (account_type < 0 || account_type > 3)
+    {
+        cout << "Input is Incorrect!! Select the Account from the Given List.";
+        cout << "1) Current account" << endl;
+        cout << "2) Saving account" << endl;
+        cout << "Select Account Type : ";
+        cin >> account_type;
+        cout << endl;
+    }
+
+    if (account_type == 1)
+    {
+        customerCreated.type_Of_Account = "Current";
+        customerCreated.is_Current_Acc = true;
+        cout << "Enter the OD Limit : ";
+        cin >> customerCreated.OD_Max;
+    }
+    else if (account_type == 2)
+    {
+        customerCreated.type_Of_Account = "Saving";
+    }
+
+    long cash_Deposit_Now;
+    cout << "Enter the Amount Initially deposited : ";
+    cin>>cash_Deposit_Now;
+    customerCreated.cash_Deposit=cash_Deposit_Now;
+    bank.customer_Name_Arr.push_back(customer_Name);
+    bank.customer_Arr.push_back(customerCreated);
+    MyFile<<customerCreated.date_Today<<" - "<<customerCreated.Customer_Name<<" : Account created."<<endl;
+    MyFile<<customerCreated.date_Today<<" - "<<customerCreated.Customer_Name<<" : Deposited "<<cash_Deposit_Now<<endl;
+    Transaction transaction_now_1;
+    transaction_now_1.set_Transaction_Date(customerCreated.date_Today);
+    transaction_now_1.set_Description(customerCreated.Customer_Name,"Money Credited to Customer Account",cash_Deposit_Now);
+    customerCreated.transactions.push_back(transaction_now_1);
+
+};
+
+void Employee::deposit_Cash(Customer& customer,Bank& bank,ofstream& MyFile,ofstream& Bank_File)
+{
+    if (customer.is_Closed == false)
+    {
+        long account_balance = customer.cash_Deposit;
+        long now_deposited;
+        cout << "Enter the Amount to be Deposited: ";
+        cin >> now_deposited;
+        customer.cash_Deposit = account_balance + now_deposited;
+        MyFile<<customer.date_Today<<" - "<<customer.Customer_Name<<" : Deposited "<<now_deposited<<endl;
+        Transaction transaction_now_1;
+        transaction_now_1.set_Transaction_Date(customer.date_Today);
+        transaction_now_1.set_Description(customer.Customer_Name,"Money Credited to Customer Account",now_deposited);
+        customer.transactions.push_back(transaction_now_1);
+
+        if (customer.cash_Deposit >= 0)
+        {
+            bank.bank_Balance+=customer.OD_Now;
+            Bank_File<<customer.date_Today<<" - "<<customer.Customer_Name<<" : Overdraft Credited to Bank Account : "<<to_string(customer.OD_Now)<<" LKR."<<endl;
+            Bank_File<<customer.date_Today<<" - "<<"Bank Balance : "<<bank.bank_Balance<<endl;
+            Transaction transaction_now_2;
+            transaction_now_2.set_Transaction_Date(customer.date_Today);
+            transaction_now_2.set_Description(customer.Customer_Name,"Overdraft Credited to Bank Account",customer.OD_Now);
+            bank.transactions.push_back(transaction_now_2);
+            customer.OD_Now = 0;
+
+        }
+        else
+        {
+            bank.bank_Balance+=now_deposited;
+            customer.OD_Now -= now_deposited;
+            Bank_File<<customer.date_Today<<" - "<<customer.Customer_Name<<" : Overdraft Credited to Bank Account : "<<to_string(now_deposited)<<" LKR."<<endl;
+            Bank_File<<customer.date_Today<<" - "<<"Bank Balance : "<<bank.bank_Balance<<endl;
+            Transaction transaction_now_2;
+            transaction_now_2.set_Transaction_Date(customer.date_Today);
+            transaction_now_2.set_Description(customer.Customer_Name,"Overdraft Credited to Bank Account",now_deposited);
+            bank.transactions.push_back(transaction_now_2);
+        }
+    }
+    else
+    {
+        cout << "Account doesn't Exist!! Already Closed." << endl;
+    }
+};
+
+void Employee::withdraw_Cash(Customer& customer,Bank& bank,ofstream& MyFile,ofstream& Bank_File)
+{
+    if (customer.is_Closed == false)
+    {
+        long now_Withdraw;
+        cout << "Enter the Amount You Want to Withdraw : ";
+        cin >> now_Withdraw;
+
+        if (customer.is_Current_Acc == false && now_Withdraw > customer.cash_Deposit)
+        {
+            cout << "Sorry!! Account Balance is Insufficient." << endl;
+        }
+        else if (customer.is_Current_Acc == false && now_Withdraw <= customer.cash_Deposit)
+        {
+            customer.cash_Deposit -= now_Withdraw;
+            cout << "Withdrawal Successful." << endl;
+            MyFile<<customer.date_Today<<" - "<<customer.Customer_Name<<" : Withdrawn "<<now_Withdraw<<endl;
+            Transaction transaction_now_1;
+            transaction_now_1.set_Transaction_Date(customer.date_Today);
+            transaction_now_1.set_Description(customer.Customer_Name,"Money Debited from Customer Account",now_Withdraw);
+            bank.transactions.push_back(transaction_now_1);
+        }
+        else if (customer.is_Current_Acc == true && now_Withdraw > customer.cash_Deposit)
+        {
+            if (((customer.cash_Deposit - now_Withdraw) * (-1)) <= customer.OD_Max && ((customer.cash_Deposit - now_Withdraw) * (-1)) <= bank.bank_Balance )
+            {
+                customer.OD_Now = now_Withdraw - (customer.cash_Deposit);
+                bank.bank_Balance-=customer.OD_Now;
+                customer.cash_Deposit -= now_Withdraw;
+                cout << "Withdrawal Successful." << endl;
+                Bank_File<<customer.date_Today<<" - "<<customer.Customer_Name<<" : Overdraft Debited to Bank Account : "<<to_string(customer.OD_Now)<<" LKR."<<endl;
+                Bank_File<<customer.date_Today<<" - "<<"Bank Balance : "<<bank.bank_Balance<<endl;
+                MyFile<<customer.date_Today<<" - "<<customer.Customer_Name<<" : Withdrawn "<<now_Withdraw<<endl;
+                Transaction transaction_now_2;
+                Transaction transaction_now_3;
+                transaction_now_2.set_Transaction_Date(customer.date_Today);
+                transaction_now_3.set_Transaction_Date(customer.date_Today);
+                transaction_now_2.set_Description(customer.Customer_Name,"Money Withdrawn from Customer Account",now_Withdraw);
+                transaction_now_3.set_Description(customer.Customer_Name,"Overdraft Debited to Bank Account",customer.OD_Now);
+                customer.transactions.push_back(transaction_now_2);
+                bank.transactions.push_back(transaction_now_3);
+            }
+            else if(((customer.cash_Deposit - now_Withdraw) * (-1)) <= customer.OD_Max && ((customer.cash_Deposit - now_Withdraw) * (-1)) > bank.bank_Balance)
+            {
+                cout << "Withdrawl Deined!! Requested Amount Exceeds the Balance in the Bank.";
+            }
+            else
+            {
+                cout << "Withdrawl Deined!! Requested Amount Exceeds the Maximum OverDraft";
+            }
+        }
+        else if (customer.is_Current_Acc == true && now_Withdraw <= customer.cash_Deposit)
+        {
+            customer.cash_Deposit -= now_Withdraw;
+            cout << "Withdrawal Successful." <<endl;
+            MyFile<<customer.date_Today<<" - "<<customer.Customer_Name<<" : Withdrawn "<<now_Withdraw<<endl;
+            Transaction transaction_now_4;
+            transaction_now_4.set_Transaction_Date(customer.date_Today);
+            transaction_now_4.set_Description(customer.Customer_Name,"Money Debited from Customer Account",now_Withdraw);
+            customer.transactions.push_back(transaction_now_4);
+        }
+    }
+    else
+    {
+        cout << "Account doesn't Exist!! Already Closed." << endl;
+    }
+};
+
+void Employee::view_Transactions(Bank& bank)
+{
+    int no_Of_Bank_Transactions=bank.transactions.size();
+    cout<<"Transactions Related to the Bank's Money"<<endl;
+    for(int i=0; i<no_Of_Bank_Transactions; i++)
+    {
+        cout<<bank.transactions[i].get_Description()<<endl;
+    }
+    cout<<endl;
+    for(int i=0; i<bank.customer_Arr.size(); i++)
+    {
+        cout<<"Transaction Related with "+bank.customer_Arr[i].Customer_Name<<endl;
+        for(int j=0; j<bank.customer_Arr[i].transactions.size(); j++)
+        {
+            cout<<bank.customer_Arr[i].transactions[j].get_Description()<<endl;
+        }
+    }
+    cout<<endl;
+};
+
+string Employee::get_Employee_Name()
+{
+    return this->employee_Name;
+};
+
+void Employee::close_Account(Customer& customer,ofstream& MyFile)
+{
+    if (customer.cash_Deposit == 0)
+    {
+        customer.is_Closed = true;
+        cout << "Account Closed Successfully." << endl;
+        MyFile<<customer.date_Today<<" - "<<customer.Customer_Name<<" : Account Closed"<<endl;
+    }
+    else if (customer.cash_Deposit > 0)
+    {
+        string user_Input_Close_Acc;
+        cout << "If You Want to Withdraw the remaining amount of " << customer.cash_Deposit << " and Close the Account"<<endl;
+        cout << "\tEnter 1 : Yes\nEnter 2 : No"<<endl;
+        cout << "Selection : ";
+        cin >> user_Input_Close_Acc;
+        cout << endl;
+        if (user_Input_Close_Acc == "1")
+        {
+            customer.cash_Deposit == 0;
+            customer.is_Closed = true;
+            cout << "Account Closed Successfully." << endl;
+            MyFile<<customer.date_Today<<" - "<<customer.Customer_Name<<" : Remaining Amount of"<<customer.cash_Deposit <<" is Taken and Account is Closed."<<endl;
+            Transaction transaction_now_2;
+            transaction_now_2.set_Transaction_Date(customer.date_Today);
+            transaction_now_2.set_Description(customer.Customer_Name,"Money Debited from Customer Account",customer.cash_Deposit);
+            customer.transactions.push_back(transaction_now_2);
+
+        }
+        else if (user_Input_Close_Acc == "2")
+        {
+            cout << "Account not Closed" << endl;
+        }
+    }
+    else if (customer.cash_Deposit < 0)
+    {
+        cout << "Account Closing Request Denied!! There is an OverDraft in this Account." << endl;
+    }
+
+};
